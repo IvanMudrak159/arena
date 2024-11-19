@@ -25,7 +25,7 @@ var gems: Array[Gem] = []
 var ticks = 0
 var time_left = 0
 
-const TIME_LIMIT = 60
+const TIME_LIMIT = 6000
 
 func _ready():
     if show_navmesh:

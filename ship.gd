@@ -61,11 +61,13 @@ func _physics_process(delta):
             gems.assign(get_parent().gems.map(func(g): return g.position))
             action = agent.action(wall_polygons, gems, polygons, neighbors)
 
-    var turn = action[0] if use_agent else Input.get_axis('ui_left', 'ui_right')
+    #var turn = action[0] if use_agent else Input.get_axis('ui_left', 'ui_right')
+    var turn = Input.get_axis('ui_left', 'ui_right')
     turn = clampi(turn, -1, 1)
     rotation += turn * ROTATE_SPEED * delta
 
-    var thrust = action[1] if use_agent else Input.is_action_pressed('thrust')
+    #var thrust = action[1] if use_agent else Input.is_action_pressed('thrust')
+    var thrust = Input.is_action_pressed('thrust')
     if thrust:
         velocity += Vector2.from_angle(rotation) * ACCEL * delta
         $particles.emitting = true
@@ -79,7 +81,8 @@ func _physics_process(delta):
         if use_agent:
             agent.bounce()
 
-    var fire = action[2] if use_agent else Input.is_action_just_pressed('fire')
+    #var fire = action[2] if use_agent else Input.is_action_just_pressed('fire')
+    var fire = Input.is_action_just_pressed('fire')
     if lasers > 0 and fire:
         get_parent().add_laser(-1)
         %fire_sound.play()
