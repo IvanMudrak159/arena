@@ -18,4 +18,5 @@ func _to_string() -> String:
     ]
 
 func equals(other: PolygonNode) -> bool:
+    if(other == null): return false
     return self.center == other.center and self.polygon == other.polygon
