@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://dkbyqg4etp3pv"]
+[gd_scene load_steps=21 format=3 uid="uid://dkbyqg4etp3pv"]
 
 [ext_resource type="Script" path="res://arena.gd" id="1_1v0vr"]
 [ext_resource type="Script" path="res://ship.gd" id="1_cqiuf"]
@@ -20,9 +20,6 @@ outlines = Array[PackedVector2Array]([PackedVector2Array(20, 55, 1380, 55, 1380,
 source_geometry_mode = 1
 source_geometry_group_name = &"walls"
 agent_radius = 29.0
-
-[sub_resource type="Gradient" id="Gradient_8nlul"]
-colors = PackedColorArray(0.801612, 0.000169517, 0.700148, 1, 1, 1, 1, 1)
 
 [sub_resource type="Gradient" id="Gradient_oik6f"]
 
@@ -104,13 +101,13 @@ visible = false
 self_modulate = Color(0.235294, 0.854902, 0.658824, 1)
 width = 3.0
 
-[node name="debug_path_smooth" type="Line2D" parent="."]
-width = 3.0
-gradient = SubResource("Gradient_8nlul")
-
 [node name="debug_path_portals" type="Line2D" parent="."]
 width = 3.0
 gradient = SubResource("Gradient_oik6f")
+
+[node name="debug_path_smooth" type="Line2D" parent="."]
+width = 3.0
+default_color = Color(0, 0, 0, 1)
 
 [node name="debug_path_future" type="Line2D" parent="."]
 width = 3.0
@@ -265,4 +262,18 @@ offset_left = 101.0
 offset_top = 253.0
 offset_right = 197.0
 offset_bottom = 276.0
+text = "DEBUG TEXT"
+
+[node name="angle4" type="Label" parent="."]
+offset_left = 100.0
+offset_top = 284.0
+offset_right = 196.0
+offset_bottom = 307.0
+text = "DEBUG TEXT"
+
+[node name="futureVelocity" type="Label" parent="."]
+offset_left = 100.0
+offset_top = 314.0
+offset_right = 196.0
+offset_bottom = 337.0
 text = "DEBUG TEXT"

@@ -83,8 +83,8 @@ func build_level():
         w.queue_free()
     walls = []
 
-    #var count = 4 + level
-    var count = 0
+    var count = 4 + level
+    #var count = 0
 
     var extent1 = extent.grow(-100)
     var key_points = [extent1.position, Vector2(extent1.position.x, extent1.end.y),
@@ -116,7 +116,7 @@ func build_level():
 
     await get_tree().physics_frame
 
-    count = 4 + level
+    #count = 4 + level
 
     for i in range(count):
         var gem = null

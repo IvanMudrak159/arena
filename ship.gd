@@ -59,7 +59,7 @@ func _physics_process(delta):
 
             var gems: Array[Vector2]
             gems.assign(get_parent().gems.map(func(g): return g.position))
-            action = agent.action(wall_polygons, gems, polygons, neighbors)
+            action = agent.action(wall_polygons, gems, polygons, neighbors, delta)
 
     var turn = action[0] if use_agent else Input.get_axis('ui_left', 'ui_right')
     #var turn = Input.get_axis('ui_left', 'ui_right')
@@ -70,6 +70,7 @@ func _physics_process(delta):
     #var thrust = Input.is_action_pressed('thrust')
     if thrust:
         velocity += Vector2.from_angle(rotation) * ACCEL * delta
+        velocity
         $particles.emitting = true
     else:
         $particles.emitting = false
