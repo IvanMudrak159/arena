@@ -2,19 +2,6 @@ extends Node2D
 
 @onready var ship = get_parent()
 @onready var debug_path = ship.get_node('../debug_path')
-@onready var debug_path_polygon = ship.get_node('../debug_path_polygon')
-@onready var debug_path_target = ship.get_node('../debug_path_target')
-@onready var debug_path_smooth = ship.get_node('../debug_path_smooth')
-@onready var debug_path_portals = ship.get_node('../debug_path_portals')
-@onready var debug_path_future = ship.get_node('../debug_path_future')
-@onready var debug_path_nearestpoint = ship.get_node('../debug_path_nearestpoint')
-@onready var debugText = ship.get_node('../debugText')
-@onready var speedDebug = ship.get_node('../speedDebug')
-@onready var angle1 = ship.get_node('../angle1')
-@onready var angle2 = ship.get_node('../angle2')
-@onready var angle3 = ship.get_node('../angle3')
-@onready var angle4 = ship.get_node('../angle4')
-@onready var futureVelocity = ship.get_node('../futureVelocity')
 
 var ticks = 0
 var spin = 0
@@ -85,32 +72,25 @@ func get_steering(path: Array, ship: CharacterBody2D, max_speed: float, slowing_
     if (ship.velocity.length() > 20):
         if(abs(angle_diff_2) < 0.1 && ship.velocity.length() < 70):
             spin = 0
-            debugText.text = "Still little speed, bust to target"
             return [spin, isInSpeedLimit(spin, max_speed, delta)]
     
         if(abs(angle_diff) < 0.1):
             if(abs(angle_diff_2) < 0.1):
                 spin = 0
-                debugText.text = "Normal speed, bust to target"
                 return [spin, isInSpeedLimit(spin, max_speed, delta)]
             else:
-                debugText.text = "Rotate ship to target"
                 spin = sign(angle_diff_2)
                 return [spin, false]
         else:
             if(abs(angle_diff_3) > 2.3):
-                debugText.text = "Change velocity to reduce difference with target"
                 thrust = isInSpeedLimit(spin, max_speed, delta)
             else:
-                debugText.text = "Velocity and desired velocity too different, rotate to stop"
                 spin = sign(angle_diff)
     else:
         if(abs(angle_diff_2) < 0.1):
             spin = 0
-            debugText.text = "Little speed, bust to target"
             return [spin, isInSpeedLimit(spin, max_speed, delta)]
         else:
-            debugText.text = "Rotate ship to target"
             spin = sign(angle_diff_2)
             
     ##raw drift code
@@ -152,7 +132,7 @@ func isInSpeedLimit(spin: int, max_speed: float, delta: float) -> bool:
     var newVelocity = getFutureVelocity(spin, delta)
     var first = ship.velocity.length() < max_speed
     var second = newVelocity.length() < ship.velocity.length()
-    futureVelocity.text = str(second) + " " + str(newVelocity.length())
+    #futureVelocity.text = str(second) + " " + str(newVelocity.length())
     var thrustLimit : bool = ship.velocity.length() < max_speed || newVelocity.length() < ship.velocity.length()
     return thrustLimit
     
@@ -451,12 +431,12 @@ func markPolygons(_polygons: Array[PackedVector2Array]):
 
 func markCurrentPolygon(_playerPos, _polygons: Array[PackedVector2Array]):
     var polygon = getContainerPolygon(_playerPos, _polygons)
-    debug_path_polygon.clear_points()
-    if(polygon == null): return
-    for point in polygon:
-        debug_path_polygon.add_point(point)
-    debug_path_polygon.add_point(polygon[0])
-    return
+    #debug_path_polygon.clear_points()
+    #if(polygon == null): return
+    #for point in polygon:
+        #debug_path_polygon.add_point(point)
+    #debug_path_polygon.add_point(polygon[0])
+    #return
 
 func showPath(path: Array) -> void:
     debug_path.clear_points()
@@ -465,18 +445,20 @@ func showPath(path: Array) -> void:
             debug_path.add_point(polygon.center)
 
 func showSmoothPath(path: Array) -> void:
-    debug_path_smooth.clear_points()
-    if path.size() != 0:
-        for polygon in path:
-            debug_path_smooth.add_point(polygon)
+    print(0)
+    #debug_path_smooth.clear_points()
+    #if path.size() != 0:
+        #for polygon in path:
+            #debug_path_smooth.add_point(polygon)
 
 func showPortals(start: Vector2, end: Vector2, portals: Array[PackedVector2Array]) -> void:
-    debug_path_portals.clear_points()
-    debug_path_portals.add_point(start)
-    if portals.size() != 0:
-        for portal in portals:
-            debug_path_portals.add_point(getCenterPoint(portal))
-        debug_path_portals.add_point(end)
+    print(0)
+    #debug_path_portals.clear_points()
+    #debug_path_portals.add_point(start)
+    #if portals.size() != 0:
+        #for portal in portals:
+            #debug_path_portals.add_point(getCenterPoint(portal))
+        #debug_path_portals.add_point(end)
 
 func getCenterPoint(points: PackedVector2Array) -> Vector2:
     var x = 0
@@ -510,9 +492,10 @@ func is_point_in_polygon_winding(point: Vector2, polygon: PackedVector2Array) ->
     return winding_number != 0
 
 func showNearestGemByDistance(shipPosition: Vector2, gem: Vector2):
-    debug_path_target.clear_points()
-    debug_path_target.add_point(ship.position)
-    debug_path_target.add_point(gem)
+    print(0)
+    #debug_path_target.clear_points()
+    #debug_path_target.add_point(ship.position)
+    #debug_path_target.add_point(gem)
 
 func is_left(p0: Vector2, p1: Vector2, p2: Vector2) -> float:
     return (p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y)
