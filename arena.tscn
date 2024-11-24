@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://dkbyqg4etp3pv"]
+[gd_scene load_steps=20 format=3 uid="uid://dkbyqg4etp3pv"]
 
 [ext_resource type="Script" path="res://arena.gd" id="1_1v0vr"]
 [ext_resource type="Script" path="res://ship.gd" id="1_cqiuf"]
@@ -22,9 +22,6 @@ source_geometry_group_name = &"walls"
 agent_radius = 29.0
 
 [sub_resource type="Gradient" id="Gradient_oik6f"]
-
-[sub_resource type="Gradient" id="Gradient_q4s53"]
-colors = PackedColorArray(1, 0, 0, 1, 0.359315, 0.875808, 0, 1)
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_67qv6"]
 blend_mode = 1
@@ -51,6 +48,7 @@ editor_description = "This is the description."
 position = Vector2(0, -1)
 script = ExtResource("1_1v0vr")
 use_agent = true
+starting_level = 4
 show_navmesh = true
 show_path = true
 
@@ -97,7 +95,6 @@ width = 7.0
 default_color = Color(1, 0, 0, 1)
 
 [node name="debug_path" type="Line2D" parent="."]
-visible = false
 self_modulate = Color(0.235294, 0.854902, 0.658824, 1)
 width = 3.0
 
@@ -116,7 +113,6 @@ default_color = Color(1, 0, 0, 1)
 [node name="debug_path_nearestpoint" type="Line2D" parent="."]
 width = 3.0
 default_color = Color(1, 0, 0, 1)
-gradient = SubResource("Gradient_q4s53")
 
 [node name="ship" type="CharacterBody2D" parent="."]
 editor_description = "This is the ship."

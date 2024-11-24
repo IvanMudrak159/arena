@@ -19,21 +19,26 @@ extends Node2D
 var ticks = 0
 var spin = 0
 var thrust = false
+var markedPolygons = []
 
 func action(_walls: Array[PackedVector2Array], _gems: Array[Vector2], 
             _polygons: Array[PackedVector2Array], _neighbors: Array[Array], delta: float):
 
     ticks += 1
-    #markPolygons(_polygons)
+    markPolygons(_polygons)
     var gem = findNearestGemByDistance(ship.position, _gems)
     var polygonNodes: Array[PolygonNode] = setData(_polygons, _neighbors)
     var startNode = constructNode(ship.position, _polygons, _neighbors)
     var endNode = constructNode(gem, _polygons, _neighbors)
+    if(is_path_clear(ship.position, gem, _walls)):
+        debug_path_nearestpoint.modulate = Color.GREEN
+    else:
+        debug_path_nearestpoint.modulate = Color.RED
 
     if(startNode != null && endNode != null):
         markCurrentPolygon(ship.position, _polygons)
         var path = findPath(polygonNodes, startNode, endNode, false)
-        var smoothPath = getSmoothPath(path, ship.position, gem, _walls, true, true)
+        var smoothPath = getSmoothPath(path, ship.position, gem, _walls, false, true)
         var steering = get_steering(smoothPath, ship, 150, 40, 10, delta)
         return [steering[0], steering[1], false]
     #showNearestGemByDistance(ship.position, gem)
@@ -54,7 +59,6 @@ func get_steering(path: Array, ship: CharacterBody2D, max_speed: float, slowing_
         return [0, false]
     var target = path[0]
 
-#
     var direction_to_target = (target - ship.position).normalized()
     var desired_velocity = direction_to_target * max_speed
     var angle_diff = getAngleDifference(desired_velocity.angle(), ship.velocity.angle())
@@ -70,13 +74,13 @@ func get_steering(path: Array, ship: CharacterBody2D, max_speed: float, slowing_
     #debug_path_nearestpoint.clear_points()
     #debug_path_nearestpoint.add_point(ship.position + ship.velocity)
     #debug_path_nearestpoint.add_point(target)
-    speedDebug.text = str(ship.velocity.length())
-    angle1.text = str(angle_diff)
+    #speedDebug.text = str(ship.velocity.length())
+    #angle1.text = str(angle_diff)
     #angle2.text = str(angle_diff_2)
     #angle3.text = str(angle_diff_3)
-    angle4.text = ""
-    futureVelocity.text = ""
-    debugText.modulate = Color.GREEN
+    #angle4.text = ""
+    #futureVelocity.text = ""
+    #debugText.modulate = Color.GREEN
     
     if (ship.velocity.length() > 20):
         if(abs(angle_diff_2) < 0.1 && ship.velocity.length() < 70):
@@ -135,14 +139,7 @@ func check_drift_condition() -> bool:
     if abs(angle_diff) > 0.5 and speed > 50:
         return true
     return false
-    
-func check_drift_turn(max_speed: float) -> int:
-    var angle_diff = wrapf(ship.velocity.angle() - ship.rotation, -PI, PI)
-    var dynamic_threshold = max(0.2, 1.0 - ship.velocity.length() / max_speed)
-    if abs(angle_diff) > dynamic_threshold:
-        return sign(angle_diff)  # Корекція повороту
-    return 0  # Не повертати
-    
+
 func getAngleDifference(a: float, b: float):
         return wrapf(a - b, -PI, PI)
 
@@ -232,6 +229,7 @@ func find_shared_edge(polygon1: PackedVector2Array, polygon2: PackedVector2Array
         return PackedVector2Array()
 
 func navigation_corridor_path(portals: Array[PackedVector2Array], start: Vector2, end: Vector2, walls: Array[PackedVector2Array]) -> Array[Vector2]:
+    var bufferedWals: Array[PackedVector2Array] = create_buffer_zone(walls, ship.RADIUS)# + 0.15)
     var path: Array[Vector2] = [start]
     if(portals.size() == 0):
         path.append(end)
@@ -247,7 +245,8 @@ func navigation_corridor_path(portals: Array[PackedVector2Array], start: Vector2
         var left = portal[0]
         var right = portal[1]
         var target = right if current_pos.distance_to(left) > current_pos.distance_to(right) else left
-        if is_path_clear(current_pos, target, walls):
+        var angle_diff = getAngleDifference(current_pos.angle(), target.angle())
+        if is_path_clear(current_pos, target, bufferedWals):
             lastVisibleTarget = target
             lastVisibleTargetIndex = i
             i += 1
@@ -255,7 +254,7 @@ func navigation_corridor_path(portals: Array[PackedVector2Array], start: Vector2
             path.append(lastVisibleTarget)
             current_pos = lastVisibleTarget
 
-    if !is_path_clear(current_pos, end, walls):
+    if !is_path_clear(current_pos, end, bufferedWals):
         var portal = portals[lastVisibleTargetIndex]
         var left = portal[0]
         var right = portal[1]
@@ -281,6 +280,29 @@ func optimize_path(path: Array[PackedVector2Array], walls: Array[PackedVector2Ar
     # Додаємо останню точку шляху
     optimized_path.append(path[-1][0])
     return optimized_path
+
+func create_buffer_zone(walls: Array[PackedVector2Array], r: float) -> Array[PackedVector2Array]:
+    var buffered_walls : Array[PackedVector2Array] = []
+    
+    for wall in walls:
+        var buffered_wall = []
+        
+        for i in range(wall.size()):
+            var p1 = wall[i]
+            var p2 = wall[(i + 1) % wall.size()]  # Наступна вершина (циклічно)
+
+            # Обчислення нормалі
+            var edge = p2 - p1
+            var normal = Vector2(-edge.y, edge.x).normalized() * r
+
+            # Додаємо розширені точки для цього сегмента
+            buffered_wall.append(p1 + normal)
+            buffered_wall.append(p2 + normal)
+        
+        # Закриваємо полігон (за необхідності)
+        buffered_walls.append(PackedVector2Array(buffered_wall))
+    
+    return buffered_walls
 
 func is_path_clear(start: Vector2, end: Vector2, walls: Array[PackedVector2Array]) -> bool:
     for wall in walls:
@@ -382,6 +404,8 @@ func getCenter(polygon: PackedVector2Array) -> Vector2:
         centerY += point.y
     var centerPoint = Vector2(centerX / polygon.size(), centerY / polygon.size())
     return centerPoint
+
+
 
 func findNearestGemByDistance(playerPosition: Vector2, _gems: Array[Vector2]) -> Vector2:
     var minDistance: float = 10000000000000000 
