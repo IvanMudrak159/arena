@@ -59,7 +59,7 @@ func _physics_process(delta):
 
             var gems: Array[Vector2]
             gems.assign(get_parent().gems.map(func(g): return g.position))
-            action = agent.action(wall_polygons, gems, polygons, neighbors, delta)
+            action = agent.action(wall_polygons, gems, polygons, neighbors)
 
     var turn = action[0] if use_agent else Input.get_axis('ui_left', 'ui_right')
     #var turn = Input.get_axis('ui_left', 'ui_right')

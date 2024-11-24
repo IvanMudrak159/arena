@@ -20,30 +20,30 @@ var ticks = 0
 var spin = 0
 var thrust = false
 var markedPolygons = []
+var _delta
+
+func _physics_process(delta):
+    _delta = delta
+
 
 func action(_walls: Array[PackedVector2Array], _gems: Array[Vector2], 
-            _polygons: Array[PackedVector2Array], _neighbors: Array[Array], delta: float):
+            _polygons: Array[PackedVector2Array], _neighbors: Array[Array]):
 
     ticks += 1
-    markPolygons(_polygons)
+    #markPolygons(_polygons)
     var gem = findNearestGemByDistance(ship.position, _gems)
     var polygonNodes: Array[PolygonNode] = setData(_polygons, _neighbors)
     var startNode = constructNode(ship.position, _polygons, _neighbors)
     var endNode = constructNode(gem, _polygons, _neighbors)
-    if(is_path_clear(ship.position, gem, _walls)):
-        debug_path_nearestpoint.modulate = Color.GREEN
-    else:
-        debug_path_nearestpoint.modulate = Color.RED
 
     if(startNode != null && endNode != null):
-        markCurrentPolygon(ship.position, _polygons)
+        #markCurrentPolygon(ship.position, _polygons)
         var path = findPath(polygonNodes, startNode, endNode, false)
-        var smoothPath = getSmoothPath(path, ship.position, gem, _walls, false, true)
-        var steering = get_steering(smoothPath, ship, 150, 40, 10, delta)
-        return [steering[0], steering[1], false]
-    #showNearestGemByDistance(ship.position, gem)
+        var smoothPath = getSmoothPath(path, ship.position, gem, _walls, false, false)
+        var steering = get_steering(smoothPath, ship, 150, 40, 10, _delta)
+        return [steering[0], steering[1], true]
     spin = 1
-    return [spin, true, false]
+    return [false, ship.velocity.length() < 20, true]
 
 func get_steering(path: Array, ship: CharacterBody2D, max_speed: float, slowing_radius: float, path_radius: float, delta: float) -> Array:
     var spin = 0
@@ -177,12 +177,23 @@ func setData(_polygons: Array[PackedVector2Array], _neighbors: Array[Array]) -> 
 
 func constructNode(position: Vector2, _polygons: Array[PackedVector2Array], _neighbors: Array[Array]) -> PolygonNode:
     var i = getContainerPolygonId(position, _polygons)
-    if(i == null): return null
+    if(i == null): 
+        i = findNearestPolygon(position, _polygons)
+        if(i == -1): return null
     var polygon = _polygons[i]
     var center = getCenter(polygon)
     var neighbors = _neighbors[i]
     var polygonNode = PolygonNode.new(polygon, i, center, neighbors)
     return polygonNode
+
+func findNearestPolygon(position: Vector2, _polygons: Array[PackedVector2Array]) -> int:
+    var nearestPolygonIndex : int = -1 
+    var minDistance = 100000
+    for i in range(_polygons.size()):
+        var center = getCenter(_polygons[i])
+        if((position - center).length() < minDistance):
+            nearestPolygonIndex = i
+    return nearestPolygonIndex
 
 func findPath(polygonData: Array[PolygonNode], startPolygon: PolygonNode, endPolygon: PolygonNode, showPath: bool) -> Array[PolygonNode]:
     var path = aStar(polygonData, startPolygon, endPolygon)
@@ -229,12 +240,14 @@ func find_shared_edge(polygon1: PackedVector2Array, polygon2: PackedVector2Array
         return PackedVector2Array()
 
 func navigation_corridor_path(portals: Array[PackedVector2Array], start: Vector2, end: Vector2, walls: Array[PackedVector2Array]) -> Array[Vector2]:
-    var bufferedWals: Array[PackedVector2Array] = create_buffer_zone(walls, ship.RADIUS)# + 0.15)
+    var bufferedWalls: Array[PackedVector2Array] = create_buffer_zone(walls, ship.RADIUS - 5)
     var path: Array[Vector2] = [start]
     if(portals.size() == 0):
         path.append(end)
         return path
 
+    var direction
+    var lastVisibleDirection = Vector2.ZERO
     var current_pos = start
     var i = 0
     var lastVisibleTargetIndex = 0
@@ -245,21 +258,28 @@ func navigation_corridor_path(portals: Array[PackedVector2Array], start: Vector2
         var left = portal[0]
         var right = portal[1]
         var target = right if current_pos.distance_to(left) > current_pos.distance_to(right) else left
-        var angle_diff = getAngleDifference(current_pos.angle(), target.angle())
-        if is_path_clear(current_pos, target, bufferedWals):
+        direction = (left - right).normalized() * 10
+        if(target == left):
+            direction *= -1
+        target += direction
+        if is_path_clear(current_pos, target, bufferedWalls):
+            lastVisibleDirection = direction
             lastVisibleTarget = target
             lastVisibleTargetIndex = i
             i += 1
         else:
-            path.append(lastVisibleTarget)
+            path.append(lastVisibleTarget + lastVisibleDirection)
             current_pos = lastVisibleTarget
 
-    if !is_path_clear(current_pos, end, bufferedWals):
+    if !is_path_clear(current_pos, end, bufferedWalls):
         var portal = portals[lastVisibleTargetIndex]
         var left = portal[0]
         var right = portal[1]
         var target = right if current_pos.distance_to(left) > current_pos.distance_to(right) else left
-        path.append(target)
+        direction = (left - right).normalized() * 10
+        if(target == left):
+            direction *= -1
+        path.append(target + direction)
     path.append(end)
     return path
 
@@ -283,25 +303,16 @@ func optimize_path(path: Array[PackedVector2Array], walls: Array[PackedVector2Ar
 
 func create_buffer_zone(walls: Array[PackedVector2Array], r: float) -> Array[PackedVector2Array]:
     var buffered_walls : Array[PackedVector2Array] = []
-    
     for wall in walls:
         var buffered_wall = []
-        
         for i in range(wall.size()):
             var p1 = wall[i]
-            var p2 = wall[(i + 1) % wall.size()]  # Наступна вершина (циклічно)
-
-            # Обчислення нормалі
+            var p2 = wall[(i + 1) % wall.size()]
             var edge = p2 - p1
-            var normal = Vector2(-edge.y, edge.x).normalized() * r
-
-            # Додаємо розширені точки для цього сегмента
+            var normal = Vector2(edge.y, -edge.x).normalized() * r
             buffered_wall.append(p1 + normal)
             buffered_wall.append(p2 + normal)
-        
-        # Закриваємо полігон (за необхідності)
         buffered_walls.append(PackedVector2Array(buffered_wall))
-    
     return buffered_walls
 
 func is_path_clear(start: Vector2, end: Vector2, walls: Array[PackedVector2Array]) -> bool:
@@ -441,6 +452,7 @@ func markPolygons(_polygons: Array[PackedVector2Array]):
 func markCurrentPolygon(_playerPos, _polygons: Array[PackedVector2Array]):
     var polygon = getContainerPolygon(_playerPos, _polygons)
     debug_path_polygon.clear_points()
+    if(polygon == null): return
     for point in polygon:
         debug_path_polygon.add_point(point)
     debug_path_polygon.add_point(polygon[0])
